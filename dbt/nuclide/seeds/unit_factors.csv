@@ -1,0 +1,15 @@
+unit_hl,unit_kind,seconds_per_unit,ev_per_unit
+as,time,1e-18,
+fs,time,1e-15,
+ps,time,1e-12,
+ns,time,1e-09,
+us,time,1e-06,
+ms,time,0.001,
+s,time,1.0,
+m,time,60.0,
+h,time,3600.0,
+d,time,86400.0,
+Y,time,31556925.96768,
+eV,energy,,1.0
+keV,energy,,1000.0
+MeV,energy,,1000000.0
