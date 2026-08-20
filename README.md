@@ -7,7 +7,7 @@ international database of nuclear structure and decay data.
 Protons up, neutrons across, coloured by decay mode or half-life. Click any
 nuclide to walk its decay chain to stability.
 
-[Data source](https://nds.iaea.org/relnsd/vcharthtml/api_v0_guide.html) · live demo not yet deployed
+**[Live demo](https://nuclide-explorer.vercel.app)** · [Data source](https://nds.iaea.org/relnsd/vcharthtml/api_v0_guide.html)
 
 ---
 
@@ -139,14 +139,25 @@ written to `raw.change_log` with the specific columns that moved.
 - All SQL uses bind parameters. No user input is ever concatenated into a
   statement — filters are assembled as numbered placeholders only.
 - Rate limiting on every route, keyed per route *and* caller so a cheap
-  endpoint cannot exhaust an expensive one's budget. (In-process state; see the
-  note in `lib/rateLimit.ts` about what that means on serverless.)
+  endpoint cannot exhaust an expensive one's budget. Verified in production:
+  60 requests succeed, the next 20 return 429 with `Retry-After`.
+  Two honest caveats. Responses are CDN-cached, so a cache hit never reaches
+  the function and is never counted — the cache absorbs exactly the traffic the
+  limiter would otherwise see, but it means the limit bounds origin load rather
+  than enforcing a per-client quota. And the counters live in process memory,
+  so each warm serverless instance keeps its own. A true global quota needs
+  shared state (Upstash Redis or Vercel KV); `lib/rateLimit.ts` is shaped so
+  swapping the store changes no call site.
 - CSP with a per-request nonce and `strict-dynamic`, set in `proxy.ts`. A static
   CSP would need `unsafe-inline` for Next's hydration scripts, which defeats
   most of the point.
 - `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`,
   `Permissions-Policy`, and HSTS set in `next.config.ts`. `X-Powered-By` removed.
-- CORS is an explicit allow-list from `ALLOWED_ORIGINS`, never a wildcard.
+- CORS is an explicit allow-list from `ALLOWED_ORIGINS`, never a wildcard, and
+  every response sets `Vary: Origin` — including rejections. Without that, a
+  response cached from a request carrying no Origin header is replayed to every
+  caller, stripping the allow-origin header from legitimate cross-origin
+  requests.
 - Recursive chain queries are bounded on depth and carry a path-based cycle
   guard, so no request can walk forever.
 - `npm audit` clean. CI fails on high or critical advisories, and a secret-scan

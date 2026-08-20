@@ -19,12 +19,20 @@ function allowedOrigins(): string[] {
 
 export function corsHeaders(request: Request): Record<string, string> {
   const origin = request.headers.get("origin");
-  if (!origin || !allowedOrigins().includes(origin)) return {};
+
+  // Vary is set unconditionally, including when the origin is rejected.
+  // These responses are CDN-cached, and a response cached from a request with
+  // no Origin header would otherwise be replayed to every caller - stripping
+  // the allow-origin header from legitimate cross-origin requests. Vary tells
+  // the cache to key on Origin so each variant is stored separately.
+  const vary = { Vary: "Origin" };
+
+  if (!origin || !allowedOrigins().includes(origin)) return vary;
   return {
+    ...vary,
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
-    "Vary": "Origin",
   };
 }
 
@@ -49,6 +57,13 @@ export function json(
   if (init.cacheSeconds) {
     // The underlying dataset is revised on the order of months, so long cache
     // lifetimes are safe and keep the database out of the hot path.
+    //
+    // Note the interaction with rate limiting: a cache hit is served by the
+    // CDN and never reaches this function, so the limiter only sees cache
+    // misses. That is the right trade-off for public, read-only data - the
+    // cache absorbs exactly the traffic the limiter would otherwise have to -
+    // but it does mean the limit is a backstop on origin load, not a per-client
+    // request quota. A true quota would need shared state and an uncached route.
     headers["Cache-Control"] =
       `public, s-maxage=${init.cacheSeconds}, stale-while-revalidate=86400`;
   }
