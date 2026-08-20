@@ -1,0 +1,16 @@
+# dbt reads DATABASE_URL-derived parts from the environment so no credentials
+# are ever committed. See .env.example.
+nuclide:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('PGHOST') }}"
+      user: "{{ env_var('PGUSER') }}"
+      password: "{{ env_var('PGPASSWORD') }}"
+      port: "{{ env_var('PGPORT', '5432') | int }}"
+      dbname: "{{ env_var('PGDATABASE') }}"
+      schema: public
+      sslmode: "{{ env_var('PGSSLMODE', 'require') }}"
+      threads: 4
+      keepalives_idle: 0

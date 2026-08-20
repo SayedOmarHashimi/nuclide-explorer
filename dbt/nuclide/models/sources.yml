@@ -1,0 +1,20 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    description: >
+      Untransformed IAEA Livechart responses, loaded by pipeline/load.py.
+      Every column is text exactly as the API returned it.
+    tables:
+      - name: ground_states
+        description: One row per nuclide ground state, latest snapshot.
+        columns:
+          - name: z
+            description: Proton number, as text.
+          - name: n
+            description: Neutron number, as text.
+      - name: snapshots
+        description: One row per distinct raw payload ever loaded.
+      - name: change_log
+        description: Insert/update/delete events detected between refresh runs.

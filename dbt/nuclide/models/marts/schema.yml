@@ -1,0 +1,68 @@
+version: 2
+
+models:
+  - name: nuclides
+    description: One row per nuclide ground state. Primary table for the chart.
+    columns:
+      - name: nuclide_id
+        description: Public identifier used in URLs, e.g. "u-238".
+        tests: [unique, not_null]
+      - name: z
+        tests: [not_null]
+      - name: n
+        tests: [not_null]
+      - name: mass_number
+        tests: [not_null]
+      - name: stability
+        description: Three-state flag; see stg_ground_states for why it is not a boolean.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['stable', 'unstable', 'unknown']
+      - name: half_life_seconds
+        description: NULL for stable and unknown nuclides. Never negative.
+
+  - name: decay_modes
+    description: Tall decay table, one row per nuclide per branch.
+    columns:
+      - name: nuclide_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('nuclides')
+                field: nuclide_id
+      - name: mode_code
+        tests: [not_null]
+      - name: branch_index
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3]
+                quote: false
+      - name: daughter_nuclide_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('nuclides')
+                field: nuclide_id
+
+  - name: decay_chain_edges
+    description: Followable parent -> daughter edges. Every edge is traversable.
+    columns:
+      - name: parent_nuclide_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('nuclides')
+                field: nuclide_id
+      - name: daughter_nuclide_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('nuclides')
+                field: nuclide_id

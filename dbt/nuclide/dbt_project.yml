@@ -1,0 +1,38 @@
+name: nuclide
+version: "1.0.0"
+config-version: 2
+profile: nuclide
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  nuclide:
+    staging:
+      +materialized: view
+      +schema: staging
+    marts:
+      +materialized: table
+      +schema: marts
+
+seeds:
+  nuclide:
+    +schema: seeds
+    unit_factors:
+      +column_types:
+        seconds_per_unit: double precision
+        ev_per_unit: double precision
+    decay_rules:
+      +column_types:
+        delta_z: integer
+        delta_n: integer
+        is_terminal: boolean
+        is_fission: boolean
+        is_indeterminate: boolean
+    physical_constants:
+      +column_types:
+        value: double precision

@@ -1,0 +1,33 @@
+version: 2
+
+models:
+  - name: stg_ground_states
+    description: Typed and interpreted ground-state data. One row per nuclide.
+    columns:
+      - name: z
+        tests: [not_null]
+      - name: n
+        tests: [not_null]
+      - name: stability
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['stable', 'unstable', 'unknown']
+
+  - name: stg_decay_modes
+    description: Decay branches unpivoted from wide to tall, with daughters resolved.
+    columns:
+      - name: mode_code
+        tests: [not_null]
+      - name: branch_index
+        tests: [not_null]
+
+seeds:
+  - name: decay_rules
+    columns:
+      - name: mode
+        tests: [unique, not_null]
+  - name: unit_factors
+    columns:
+      - name: unit_hl
+        tests: [unique, not_null]
