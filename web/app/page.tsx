@@ -132,7 +132,7 @@ export default function Home() {
           </p>
         </div>
         <a
-          href="https://github.com/sayedomarhashimi/nuclide-explorer"
+          href="https://github.com/SayedOmarHashimi/nuclide-explorer"
           className="rounded-md border border-white/10 px-3 py-1.5 text-sm text-zinc-300 transition hover:border-white/25 hover:text-zinc-100"
         >
           Source

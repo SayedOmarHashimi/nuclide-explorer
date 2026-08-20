@@ -107,7 +107,7 @@ Pb-206.
 ## Running it
 
 ```bash
-git clone https://github.com/sayedomarhashimi/nuclide-explorer
+git clone https://github.com/SayedOmarHashimi/nuclide-explorer
 cd nuclide-explorer
 cp .env.example .env        # fill in your Postgres connection details
 

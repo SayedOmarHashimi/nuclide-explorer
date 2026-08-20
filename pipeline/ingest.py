@@ -22,7 +22,7 @@ RAW_DIR = Path(__file__).resolve().parent.parent / "data" / "raw"
 
 # IAEA rejects some default client user-agents. Identify ourselves honestly:
 # this is a low-volume scheduled job against a public dataset.
-USER_AGENT = "nuclide-explorer/1.0 (+https://github.com/sayedomarhashimi/nuclide-explorer)"
+USER_AGENT = "nuclide-explorer/1.0 (+https://github.com/SayedOmarHashimi/nuclide-explorer)"
 
 REQUEST_TIMEOUT = 120
 
