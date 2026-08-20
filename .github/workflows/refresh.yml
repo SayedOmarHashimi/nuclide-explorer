@@ -1,0 +1,53 @@
+name: Scheduled data refresh
+
+on:
+  schedule:
+    # 03:15 UTC on the 1st of each month. ENSDF evaluations are published on a
+    # months-long cadence, so anything more frequent is pure waste - and the
+    # job short-circuits on an unchanged payload hash anyway.
+    - cron: "15 3 1 * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Reload even if the upstream payload is unchanged"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: data-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r pipeline/requirements.txt
+
+      - name: Refresh
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PGHOST: ${{ secrets.PGHOST }}
+          PGUSER: ${{ secrets.PGUSER }}
+          PGPASSWORD: ${{ secrets.PGPASSWORD }}
+          PGDATABASE: ${{ secrets.PGDATABASE }}
+          PGSSLMODE: require
+          DBT_PROFILES_DIR: ${{ github.workspace }}/dbt/nuclide
+        run: |
+          python pipeline/refresh.py ${{ inputs.force && '--force' || '' }} \
+            | tee "$GITHUB_STEP_SUMMARY.json"
+          {
+            echo '### Data refresh'
+            echo '```json'
+            cat "$GITHUB_STEP_SUMMARY.json"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

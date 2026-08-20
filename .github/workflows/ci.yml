@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pipeline:
+    name: Python pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Unit tests
+        # These cover the unit conversions and decay rules and need no
+        # database or network.
+        run: python -m pytest
+
+      - name: dbt parse
+        # Validates model SQL, refs and Jinja without connecting. The dummy
+        # credentials are never used: `parse` does not open a connection.
+        working-directory: dbt/nuclide
+        env:
+          DBT_PROFILES_DIR: .
+          PGHOST: localhost
+          PGUSER: ci
+          PGPASSWORD: ci
+          PGDATABASE: ci
+          PGSSLMODE: disable
+        run: dbt parse
+
+      - name: Verify dbt seeds match physics.py
+        # physics.py is the single source of truth for unit factors and decay
+        # rules; the seeds are generated from it. If someone edits a seed by
+        # hand this fails.
+        run: |
+          python pipeline/export_seeds.py
+          git diff --exit-code dbt/nuclide/seeds/
+
+  web:
+    name: Web app
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npx eslint .
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        # Validation schemas and the rate limiter, exercised without a database.
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Audit dependencies
+        # Fails the build on high or critical advisories. Moderate and below
+        # are reported but do not block.
+        run: npm audit --audit-level=high
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Look for committed credentials
+        run: |
+          if git grep -nEI \
+            -e 'postgres(ql)?://[^ "]*:[^ "@]+@' \
+            -e '(SECRET|PASSWORD|API_KEY|TOKEN)[[:space:]]*=[[:space:]]*["'"'"'][^"'"'"']{12,}' \
+            -- . ':(exclude).env.example' ':(exclude)**/*.md'; then
+            echo "::error::Possible secret committed to the repository"
+            exit 1
+          fi
+          echo "No credential-shaped strings found."
