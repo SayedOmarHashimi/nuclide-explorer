@@ -7,7 +7,7 @@ international database of nuclear structure and decay data.
 Protons up, neutrons across, coloured by decay mode or half-life. Click any
 nuclide to walk its decay chain to stability.
 
-**[Live demo](https://nuclide-explorer.vercel.app)** · [Data source](https://nds.iaea.org/relnsd/vcharthtml/api_v0_guide.html)
+[Data source](https://nds.iaea.org/relnsd/vcharthtml/api_v0_guide.html) · live demo not yet deployed
 
 ---
 
