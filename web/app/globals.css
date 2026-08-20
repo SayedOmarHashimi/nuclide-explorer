@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/*
+  This app commits to a dark palette rather than following the OS preference.
+  That is a deliberate design decision, not an oversight: the nuclide chart is
+  drawn on a dark canvas because the decay-mode colours (the conventional Segre
+  palette) are chosen for contrast against black, and a light-mode variant would
+  need a second, differently-tuned palette to stay readable.
+
+  Note the body rule sits inside @layer base. The default create-next-app
+  stylesheet leaves it unlayered, and unlayered CSS outranks everything in
+  @layer utilities - which silently defeats any bg-* or text-* class set on
+  <body>.
+*/
+
+:root {
+  --background: #09090b; /* zinc-950 */
+  --foreground: #fafafa; /* zinc-50  */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, sans-serif;
+  }
+
+  /* Form controls inherit the dark ground instead of the UA's light default. */
+  input,
+  select,
+  button {
+    font: inherit;
+  }
+}
